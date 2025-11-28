@@ -27,12 +27,6 @@ type TokenManager struct {
 	mu          sync.RWMutex
 }
 
-type TokenResponse struct {
-	AccessToken string `json:"access_token"`
-	ExpiresIn   string `json:"expires_in"`
-	TokenType   string `json:"token_type"`
-}
-
 func NewTokenManager(cfg *config.Config) (*TokenManager, error) {
 	keyBytes, err := os.ReadFile(cfg.PrivateKeyPath)
 	if err != nil {

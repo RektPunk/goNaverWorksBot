@@ -12,13 +12,6 @@ import (
 	"goNaverWorksBot/internal/config"
 )
 
-const UserPostURL = "https://www.worksapis.com/v1.0/bots/%s/users/%s/messages"
-
-type Content struct {
-	Type string `json:"type"`
-	Text string `json:"text"`
-}
-
 type MessagePayload struct {
 	Content Content `json:"content"`
 }
