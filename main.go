@@ -10,22 +10,29 @@ import (
 )
 
 func main() {
-	log.Println("--- Starting goNaverWorksBot Initialization ---")
+	log.Println("[INFO] Application starting...")
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("[Fatal] Configuration Load Failed: %v", err)
 	}
+	log.Println("[INFO] Configuration loaded successfully.")
+
 	tokenManager, err := works.NewTokenManager(cfg)
 	if err != nil {
 		log.Fatalf("[Fatal] TokenManager Initialization Failed (Private Key Load): %v", err)
 	}
+	log.Println("[INFO] Configuration loaded successfully.")
+
 	messageSender := works.NewMessageSender(tokenManager)
+	log.Println("[INFO] Message Sender initialized.")
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		server.WebhookHandler(w, r, cfg, messageSender)
 	})
 	addr := fmt.Sprintf(":%d", cfg.Port)
-	log.Printf("goNaverWorks Server Started: %s port", addr)
+	log.Printf("[INFO] Server listening on address %s", addr)
+
 	if err := http.ListenAndServe(addr, nil); err != nil {
-		log.Fatalf("goNaverWorks Server Failed: %v", err)
+		log.Fatalf("[FATAL] Server failed: %v", err)
 	}
 }
