@@ -21,7 +21,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("[Fatal] TokenManager Initialization Failed (Private Key Load): %v", err)
 	}
-	log.Println("[INFO] Configuration loaded successfully.")
+	log.Println("[INFO] TokenManager initialization successfully.")
 
 	messageSender := works.NewMessageSender(tokenManager)
 	log.Println("[INFO] Message Sender initialized.")
