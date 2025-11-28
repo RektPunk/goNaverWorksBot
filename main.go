@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"log"
+	"time"
 
 	"goNaverWorksBot/internal/config"
 	"goNaverWorksBot/pkg/works"
@@ -13,20 +15,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("Configuration Load Failed: %v", err)
 	}
-	log.Println("Configuration Loaded Successfully!")
-
+	targetID := "bb271bd3-2f4f-61e6-ab3b-d23f1e366c51"
 	tokenManager, err := works.NewTokenManager(cfg)
 	if err != nil {
 		log.Fatalf("TokenManager Initialization Failed (Private Key Load): %v", err)
 	}
-	log.Println("TokenManager Initialized.")
+	messageSender := works.NewMessageSender(tokenManager)
+	testMessage := "안녕하세요! Go 언어 봇 개발 환경 구축 후 첫 번째 테스트 메시지입니다. 🎉"
 
-	log.Println("--- Attempting to retrieve Access Token ---")
-	accessToken, err := tokenManager.GetToken()
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	err = messageSender.PostMessage(ctx, cfg, testMessage, targetID)
 	if err != nil {
-		log.Fatalf("Failed to get Access Token: %v", err)
+		log.Fatalf("Post Message Failed: %v", err)
 	}
-	log.Printf("Access Token successfully retrieved (Partial): %s...", accessToken[:20])
-
 	log.Println("Initialization complete. Ready to start the server.")
 }
