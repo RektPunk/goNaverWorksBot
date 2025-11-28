@@ -19,6 +19,10 @@ type Content struct {
 	Text string `json:"text"`
 }
 
+type MessagePayload struct {
+	Content Content `json:"content"`
+}
+
 type WebhookRequest struct {
 	Type       string  `json:"type"`
 	Source     Source  `json:"source"`

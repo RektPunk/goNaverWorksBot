@@ -12,10 +12,6 @@ import (
 	"goNaverWorksBot/internal/config"
 )
 
-type MessagePayload struct {
-	Content Content `json:"content"`
-}
-
 type MessageSender struct {
 	Client *http.Client
 	TM     *TokenManager
