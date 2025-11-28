@@ -15,7 +15,7 @@ This is a robust Naver Works Bot application built with Go. It provides the esse
     ```bash
     cp .env.sample .env
     ```
-    - Place your Key: Ensure your RSA Private Key file is saved at the path specified in .env (default is ./keys/private.key).
+    - Place your Key: Ensure your RSA Private Key file is saved at the path specified in .env.
 
 2. Run the Bot
     Execute the `main.go` file to start the server:
