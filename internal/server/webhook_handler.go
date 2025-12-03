@@ -10,10 +10,14 @@ import (
 	"time"
 
 	"goNaverWorksBot/internal/config"
+	"goNaverWorksBot/internal/db"
 	"goNaverWorksBot/pkg/works"
 )
 
-func WebhookHandler(w http.ResponseWriter, r *http.Request, cfg *config.Config, sender *works.MessageSender) {
+const UserRole = "user"
+const AssistantRole = "assistant"
+
+func WebhookHandler(w http.ResponseWriter, r *http.Request, cfg *config.Config, sender *works.MessageSender, history *db.HistoryRepository) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -33,14 +37,29 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request, cfg *config.Config, 
 	}
 
 	if webhookRequest.Type == "message" && webhookRequest.Content.Type == "text" {
-		responseMessage := fmt.Sprintf("received: %s", webhookRequest.Content.Text)
-
-		targetID := webhookRequest.Source.UserID // Only respond to the user in 1-on-1 chats
+		userID := webhookRequest.Source.UserID // Only respond to the user in 1-on-1 chats
+		userMessage := webhookRequest.Content.Text
 		go func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
-			if err := sender.PostMessage(ctx, cfg, responseMessage, targetID); err != nil {
+			if err := history.SaveAndLimitChatHistory(ctx, userID, UserRole, userMessage); err != nil {
+				log.Printf("ERROR: Failed to save user chat history for %s: %v", userID, err)
+			}
+			messages, err := history.GetRecentChatHistory(ctx, userID)
+			if err != nil {
+				log.Printf("ERROR: Failed to get recent chat history for %s: %v", userID, err)
+			}
+			finalResponseMessage := fmt.Sprintf(
+				"chat history count: (%d) saved",
+				len(messages),
+			)
+
+			if err := sender.PostMessage(ctx, cfg, finalResponseMessage, userID); err != nil {
 				log.Printf("ERROR: Failed send messages: %v", err)
+			}
+
+			if err := history.SaveAndLimitChatHistory(ctx, userID, AssistantRole, finalResponseMessage); err != nil {
+				log.Printf("ERROR: Failed to save user chat history for %s: %v", userID, err)
 			}
 		}()
 	}
