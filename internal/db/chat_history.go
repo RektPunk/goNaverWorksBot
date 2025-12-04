@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-const HistoryLimit int = 100
+const HistoryLimit int = 30
 
 type HistoryRepository struct {
 	DB *sql.DB
@@ -21,7 +21,12 @@ type ChatTurn struct {
 	Text string
 }
 
-func (r *HistoryRepository) SaveAndLimitChatHistory(ctx context.Context, userID string, role string, text string) (err error) {
+func (r *HistoryRepository) SaveAndLimitChatHistory(
+	ctx context.Context,
+	userID string,
+	userTurn ChatTurn,
+	assistantTurn ChatTurn,
+) (err error) {
 	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to start transaction: %w", err)
@@ -37,10 +42,18 @@ func (r *HistoryRepository) SaveAndLimitChatHistory(ctx context.Context, userID 
 
 	_, err = tx.ExecContext(ctx,
 		"INSERT INTO chat_history (user_id, role, text) VALUES (?, ?, ?)",
-		userID, role, text,
+		userID, userTurn.Role, userTurn.Text,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to insert history: %w", err)
+		return fmt.Errorf("failed to insert user turn history: %w", err)
+	}
+
+	_, err = tx.ExecContext(ctx,
+		"INSERT INTO chat_history (user_id, role, text) VALUES (?, ?, ?)",
+		userID, assistantTurn.Role, assistantTurn.Text,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to insert assistant turn history: %w", err)
 	}
 
 	var count int
@@ -53,10 +66,16 @@ func (r *HistoryRepository) SaveAndLimitChatHistory(ctx context.Context, userID 
 	}
 
 	if count > HistoryLimit {
-		N := count - HistoryLimit
 		_, err = tx.ExecContext(ctx,
-			"DELETE FROM chat_history WHERE user_id = ? ORDER BY id ASC LIMIT ?",
-			userID, N,
+			`DELETE FROM chat_history 
+			WHERE user_id = ? 
+				AND id < (
+				SELECT id FROM chat_history 
+				WHERE user_id = ? 
+				ORDER BY id DESC 
+				LIMIT 1 OFFSET ?
+			)`,
+			userID, userID, HistoryLimit,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to delete old history: %w", err)
@@ -70,8 +89,18 @@ func (r *HistoryRepository) SaveAndLimitChatHistory(ctx context.Context, userID 
 
 func (r *HistoryRepository) GetRecentChatHistory(ctx context.Context, userID string) ([]ChatTurn, error) {
 	rows, err := r.DB.QueryContext(ctx,
-		"SELECT role, text FROM chat_history WHERE user_id = ? ORDER BY id DESC LIMIT ?",
-		userID, HistoryLimit-1,
+		`SELECT 
+			role, text 
+		FROM chat_history 
+		WHERE user_id = ?
+			AND id > (
+				SELECT id FROM chat_history 
+				WHERE user_id = ? 
+				ORDER BY id DESC 
+				LIMIT 1 OFFSET ?
+			)
+		ORDER BY id ASC`,
+		userID, userID, HistoryLimit,
 	)
 
 	if err != nil {
