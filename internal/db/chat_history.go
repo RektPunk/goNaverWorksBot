@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-const HistoryLimit = 100
+const HistoryLimit int = 100
 
 type HistoryRepository struct {
 	DB *sql.DB
