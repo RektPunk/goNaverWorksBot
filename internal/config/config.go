@@ -16,6 +16,7 @@ type Config struct {
 	BotID          string
 	BotSecret      string
 	PrivateKeyPath string
+	OpenAIAPIKey   string
 }
 
 func Load() (*Config, error) {
@@ -30,6 +31,7 @@ func Load() (*Config, error) {
 		BotID:          os.Getenv("BOT_ID"),
 		BotSecret:      os.Getenv("BOT_SECRET"),
 		PrivateKeyPath: os.Getenv("PRIVATE_KEY_PATH"),
+		OpenAIAPIKey:   os.Getenv("OPENAI_API_KEY"),
 	}
 
 	portStr := os.Getenv("PORT")
@@ -48,8 +50,8 @@ func Load() (*Config, error) {
 		conf.ClientSecret == "" ||
 		conf.ServiceAccount == "" ||
 		conf.BotSecret == "" ||
-		conf.PrivateKeyPath == "" {
-
+		conf.PrivateKeyPath == "" ||
+		conf.OpenAIAPIKey == "" {
 		return nil, fmt.Errorf("missing one or more required environment variables (WORKS_BOT_ID, WORKS_CLIENT_ID, WORKS_CLIENT_SECRET, SERVICE_ACCOUNT, NAVERWORKS_BOT_SECRET, PRIVATE_KEY_PATH) must be set")
 	}
 
