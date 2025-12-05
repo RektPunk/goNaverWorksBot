@@ -6,19 +6,19 @@ import (
 	"fmt"
 )
 
-const HistoryLimit int = 30
+const _HistoryLimit int = 30
 
 type HistoryRepository struct {
 	DB *sql.DB
 }
 
-func NewHistoryRepository(db *sql.DB) *HistoryRepository {
-	return &HistoryRepository{DB: db}
-}
-
 type ChatTurn struct {
 	Role string // "user" or "assistant"
 	Text string
+}
+
+func NewHistoryRepository(db *sql.DB) *HistoryRepository {
+	return &HistoryRepository{DB: db}
 }
 
 func (r *HistoryRepository) SaveAndLimitChatHistory(
@@ -65,7 +65,7 @@ func (r *HistoryRepository) SaveAndLimitChatHistory(
 		return fmt.Errorf("failed to count history: %w", err)
 	}
 
-	if count > HistoryLimit {
+	if count > _HistoryLimit {
 		_, err = tx.ExecContext(ctx,
 			`DELETE FROM chat_history 
 			WHERE user_id = ? 
@@ -75,7 +75,7 @@ func (r *HistoryRepository) SaveAndLimitChatHistory(
 				ORDER BY id DESC 
 				LIMIT 1 OFFSET ?
 			)`,
-			userID, userID, HistoryLimit,
+			userID, userID, _HistoryLimit,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to delete old history: %w", err)
@@ -100,7 +100,7 @@ func (r *HistoryRepository) GetRecentChatHistory(ctx context.Context, userID str
 				LIMIT 1 OFFSET ?
 			)
 		ORDER BY id ASC`,
-		userID, userID, HistoryLimit,
+		userID, userID, _HistoryLimit,
 	)
 
 	if err != nil {
